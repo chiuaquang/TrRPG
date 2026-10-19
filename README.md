@@ -4,13 +4,15 @@ Plugin dịch **runtime** cho game RPG Maker MV/MZ: chơi game tiếng Anh/Nhậ
 
 ## ✨ Tính năng
 
-- **Ép hiện tiếng Việt** — hội thoại, lựa chọn, thông báo đợi dịch xong mới hiện, không nhấp nháy tiếng Anh gốc
+- **Dịch ở lớp vẽ chữ (renderHook)** — chặn mọi text vẽ lên cửa sổ (menu custom, Save/Load, lựa chọn do plugin vẽ...), kiểu MTool; tự vẽ lại khi dịch xong
+- **Ép hiện tiếng Việt** — hội thoại, lựa chọn, thông báo NotifyMessage đợi dịch xong mới hiện, không nhấp nháy tiếng Anh gốc
+- **Tự co chữ vừa khung** — tiếng Việt dài hơn tiếng Anh, plugin tự thu nhỏ cỡ chữ/giữ căn giữa để không bị cắt chữ
 - **3 engine miễn phí**: Google Dịch, Bing Microsoft, Index-Translate 35B (AI)
-- **Từ điển Việt sẵn** — 50+ từ menu thông dụng (Save→Lưu, Load→Tải...) dịch tức thì, không cần mạng
-- **Bắt mọi loại text**: hội thoại chuẩn, lựa chọn, chữ chạy, text battle, plugin NotifyMessage/TextPicture, database (item/skill/quái...), tên map, System.json
+- **Từ điển Việt sẵn (60 từ)** — từ menu thông dụng (Save→Lưu, Load→Tải, Warp→Dịch chuyển...) dịch tức thì, không cần mạng
+- **Bắt mọi loại text**: hội thoại chuẩn (101/401), lựa chọn (102), chữ chạy (105/405), text battle, plugin NotifyMessage/TextPicture/DTextPicture, database, tên map, System.json
 - **An toàn**: chỉ dịch lớp hiển thị, không động vào logic/code game; bảo vệ control code (`\V[1]`, `\C[3]`...)
-- **Chống lag/treo**: cache localStorage, hàng đợi chống 429, watchdog chống treo game
-- **Panel cài đặt ⚙** ngay trong game: đổi engine, bật/tắt, xem trạng thái API, xóa cache
+- **Chống lag/treo**: cache localStorage, hàng đợi chống 429, tự đổi engine dự phòng, watchdog chống treo, tự tắt hook khi rảnh (`autoOff`)
+- **Panel cài đặt ⚙** ngay trong game: đổi engine, bật/tắt, xem trạng thái API (OK/Fail), xóa cache, quét dịch trước
 
 ## 📦 Cài đặt
 
@@ -24,43 +26,46 @@ Plugin dịch **runtime** cho game RPG Maker MV/MZ: chơi game tiếng Anh/Nhậ
 
 | Tham số | Mặc định | Mô tả |
 |---|---|---|
+| Ngôn ngữ đích | `vi` | `vi`, `en`, `ja`, `ko`, `zh-CN`... |
+| Ngôn ngữ gốc | `auto` | Tự nhận diện |
 | Engine | `google` | `google` / `bing` / `indextranslate` |
 | Engine dự phòng | `google` | Tự đổi khi engine chính lỗi |
-| Ngôn ngữ đích | `vi` | `vi`, `en`, `ja`... |
-| Ngôn ngữ gốc | `auto` | Tự nhận diện |
-| Số luồng song song | `2` | 1–5, càng cao càng nhanh nhưng dễ bị chặn |
-| Chế độ quét mạnh | `false` | Dịch cả text vẽ trực tiếp (quest journal...) |
-| Dịch tham số plugin | `false` | ⚠️ Chỉ bật khi hiểu rõ game (có thể chứa code) |
+| Số luồng song song | `2` | 1–5 |
+| Dịch ở lớp vẽ chữ | `true` | **Khuyên dùng** — dịch mọi text vẽ lên cửa sổ |
+| Tự tắt khi rảnh | `true` | Hết việc dịch thì dừng hook, đỡ tốn CPU |
+| Chế độ quét mạnh | `false` | Mở rộng vùng quét (tốn CPU hơn) |
+| Dịch tham số plugin | `false` | ⚠️ Chỉ bật khi hiểu rõ game (params có thể chứa code) |
+| Hiện nút cài đặt | `true` | Nút ⚙ trên màn hình |
 
 ## 🛠 Cách hoạt động
 
 ```
-Game hiện text → TrRPG chặn lại → từ điển/cached? → có: hiện ngay
-                                                   → không: đợi API dịch → hiện tiếng Việt
+Text vẽ lên cửa sổ → renderHook chặn → từ điển/cached? → có: hiện tiếng Việt ngay
+                                                        → không: dịch ngầm → tự vẽ lại cửa sổ
+Hội thoại/lựa chọn   → đợi dịch xong mới mở cửa sổ (không nhấp nháy tiếng Anh)
 ```
 
-- **Bảo vệ control code**: `\V[1]`, `\N[2]`, `\C[3]`... được thay bằng marker trước khi gửi API, khôi phục sau khi dịch
-- **Cache 2 lớp**: RAM + localStorage, không dịch lại câu đã dịch bao giờ
+- **Bảo vệ control code**: `\V[1]`, `\N[2]`, `\C[3]`, `\n`... được thay bằng marker trước khi gửi API, khôi phục sau khi dịch
+- **Cache 2 lớp**: RAM + localStorage — câu đã dịch không bao giờ dịch lại
 - **Chống 429**: hàng đợi, exponential backoff, tự đổi engine dự phòng
 
 ## 📋 Lịch sử phiên bản
 
+- **v2.2.0** — renderHook: dịch ở lớp vẽ chữ + tự co chữ vừa khung
 - **v1.8.0** — Từ điển Việt sẵn cho từ menu thông dụng
 - **v1.7.0** — Tắt dịch tham số plugin mặc định (an toàn); ép hiện tiếng Việt cho NotifyMessage
 - **v1.6.0** — Menu tự refresh khi có bản dịch mới
 - **v1.5.0** — Dịch tham số plugin (opt-in)
 - **v1.4.0** — Chống treo/lag, chẩn đoán API, dịch thêm System.json
-- **v1.3.0** — Hỗ trợ plugin TorigoyaMZ_NotifyMessage, TextPicture
-- **v1.2.0** — Chữ chạy (scrolling text), text battle, chế độ quét mạnh
-- **v1.1.0** — Ép hiện tiếng Việt cho hội thoại/lựa chọn
+- **v1.3.0** — Hỗ trợ TorigoyaMZ_NotifyMessage, TextPicture
+- **v1.1–1.2** — Ép hiện tiếng Việt, chữ chạy, text battle
 - **v1.0.0** — Bản đầu tiên
 
 ## 📁 File trong repo
 
-- `TrRPG.js` — plugin chính
+- `TrRPG.js` — plugin chính (v2.2.0)
 - `HUONG_DAN.md` — hướng dẫn chi tiết tiếng Việt
-- `TrRPG_Offline.py` — tool dự phòng: dịch trực tiếp vào file game (kiểu MTool)
-- `test_*.js` — test tự động
+- `TrRPG_Offline.py` — tool dự phòng: dịch trực tiếp vào file game
 
 ## ⚠️ Lưu ý
 
