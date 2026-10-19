@@ -1,146 +1,71 @@
-# Live translation of the RPG MV MZ game on Android
+# TrRPG — Dịch trực tiếp game RPG Maker MV/MZ
 
-A JavaScript plugin for **RPG Maker MV (Android)** that automatically translates all in-game content to your target language and provides a built-in cheat panel accessible directly during gameplay.
+Plugin dịch **runtime** cho game RPG Maker MV/MZ: chơi game tiếng Anh/Nhật/Trung, đọc **tiếng Việt trực tiếp trong game**, không cần tool ngoài, không cần sửa file game.
 
----
+## ✨ Tính năng
 
-## ✨ Features
+- **Ép hiện tiếng Việt** — hội thoại, lựa chọn, thông báo đợi dịch xong mới hiện, không nhấp nháy tiếng Anh gốc
+- **3 engine miễn phí**: Google Dịch, Bing Microsoft, Index-Translate 35B (AI)
+- **Từ điển Việt sẵn** — 50+ từ menu thông dụng (Save→Lưu, Load→Tải...) dịch tức thì, không cần mạng
+- **Bắt mọi loại text**: hội thoại chuẩn, lựa chọn, chữ chạy, text battle, plugin NotifyMessage/TextPicture, database (item/skill/quái...), tên map, System.json
+- **An toàn**: chỉ dịch lớp hiển thị, không động vào logic/code game; bảo vệ control code (`\V[1]`, `\C[3]`...)
+- **Chống lag/treo**: cache localStorage, hàng đợi chống 429, watchdog chống treo game
+- **Panel cài đặt ⚙** ngay trong game: đổi engine, bật/tắt, xem trạng thái API, xóa cache
 
-- 🌐 **Full auto-translation** — Dialogue, choices, system menus, item names, quest journals
-- 💾 **Smart caching** — Saves translations to localStorage to avoid redundant API calls
-- 💰 **Gold hack** — Instantly add 9,999,999 gold to your party
-- ❤️ **Full party recovery** — Restore HP & MP for all members
-- ⚡ **Game speed x2** — Double the SceneManager update rate
-- 🎒 **Item hack** — Scan all Items / Weapons / Armors in the game and add any quantity
-- 📱 **Floating on-screen UI** — Fixed ⚙️ button on the left edge, easy to open/close
+## 📦 Cài đặt
 
----
+1. Copy `TrRPG.js` vào thư mục `js/plugins/` của game
+2. Mở RPG Maker → Plugin Manager → thêm **TrRPG** (kéo lên **đầu danh sách** để hiệu quả nhất)
+3. Chạy game — xong!
 
-## 📦 Requirements
+> Cần mạng **lúc dịch lần đầu**. Các lần sau đọc từ cache, không cần mạng.
 
-| Requirement | Details |
-|---|---|
-| Platform | RPG Maker MV (Android) |
-| Network | Required for first-time Google Translate API calls |
-| Device permissions | No root required |
+## ⚙️ Tham số
 
----
+| Tham số | Mặc định | Mô tả |
+|---|---|---|
+| Engine | `google` | `google` / `bing` / `indextranslate` |
+| Engine dự phòng | `google` | Tự đổi khi engine chính lỗi |
+| Ngôn ngữ đích | `vi` | `vi`, `en`, `ja`... |
+| Ngôn ngữ gốc | `auto` | Tự nhận diện |
+| Số luồng song song | `2` | 1–5, càng cao càng nhanh nhưng dễ bị chặn |
+| Chế độ quét mạnh | `false` | Dịch cả text vẽ trực tiếp (quest journal...) |
+| Dịch tham số plugin | `false` | ⚠️ Chỉ bật khi hiểu rõ game (có thể chứa code) |
 
-## 🚀 Installation
-
-### Step 1 — Copy the plugin file
-Place `MV_DebugTool.js` into the game's plugin directory:
-```
-/game/js/plugins/MV_DebugTool.js
-```
-
-### Step 2 — Register in plugins.js
-Open `js/plugins.js` and add the following entry to the plugins array:
-```json
-{
-  "name": "MV_DebugTool",
-  "status": true,
-  "description": "BI9 Translation Cheat - Item Hack & Full Game Translation",
-  "parameters": {}
-}
-```
-
-### Step 3 — Launch the game
-Start the game normally. The ⚙️ button will appear automatically in the top-left corner of the screen.
-
----
-
-## 🎮 Usage
-
-### Opening the control panel
-Tap the **⚙️** button in the top-left corner to toggle the cheat menu on or off.
-
-### Menu features
-
-| Button | Description |
-|---|---|
-| 💰 +9,999,999 Gold | Instantly add gold to the party wallet |
-| ❤️ Recover All Members | Fully restore HP and MP for the entire party |
-| ⚡ Speed Up (x2) | Activate double speed (can only be enabled once per session) |
-| 🎒 Item Hack | Select an item from the list → enter quantity → tap **Add Now** |
-
-> ⚠️ **Note:** All cheat features require the game to be **loaded into an active play session** first (they will not work from the title screen).
-
----
-
-## 🌐 Translation Engine
-
-The plugin uses the **free Google Translate API** via its public endpoint:
+## 🛠 Cách hoạt động
 
 ```
-https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=vi&dt=t&q=...
+Game hiện text → TrRPG chặn lại → từ điển/cached? → có: hiện ngay
+                                                   → không: đợi API dịch → hiện tiếng Việt
 ```
 
-### Auto-translated components
+- **Bảo vệ control code**: `\V[1]`, `\N[2]`, `\C[3]`... được thay bằng marker trước khi gửi API, khôi phục sau khi dịch
+- **Cache 2 lớp**: RAM + localStorage, không dịch lại câu đã dịch bao giờ
+- **Chống 429**: hàng đợi, exponential backoff, tự đổi engine dự phòng
 
-| Hook | Scope |
-|---|---|
-| `Game_Message.add` | Standard dialogue messages |
-| `Game_Message.setChoices` | Dialogue choice options |
-| `Window_Command.addCommand` | System menus (Items, Save, Options...) |
-| `Window_Base.drawItemName` | Item, weapon, and armor names |
-| `Window_Base.drawText` | Free-form text (quest journals, custom menus) |
-| `Window_Base.drawTextEx` | Control-code text (colored text, icons) |
+## 📋 Lịch sử phiên bản
 
-### Caching behavior
-- Translations are stored in `localStorage` under the key `mv_translation_cache`
-- Previously translated strings skip the API call entirely → saves bandwidth and speeds up rendering
+- **v1.8.0** — Từ điển Việt sẵn cho từ menu thông dụng
+- **v1.7.0** — Tắt dịch tham số plugin mặc định (an toàn); ép hiện tiếng Việt cho NotifyMessage
+- **v1.6.0** — Menu tự refresh khi có bản dịch mới
+- **v1.5.0** — Dịch tham số plugin (opt-in)
+- **v1.4.0** — Chống treo/lag, chẩn đoán API, dịch thêm System.json
+- **v1.3.0** — Hỗ trợ plugin TorigoyaMZ_NotifyMessage, TextPicture
+- **v1.2.0** — Chữ chạy (scrolling text), text battle, chế độ quét mạnh
+- **v1.1.0** — Ép hiện tiếng Việt cho hội thoại/lựa chọn
+- **v1.0.0** — Bản đầu tiên
 
----
+## 📁 File trong repo
 
-## ⚙️ Customization
+- `TrRPG.js` — plugin chính
+- `HUONG_DAN.md` — hướng dẫn chi tiết tiếng Việt
+- `TrRPG_Offline.py` — tool dự phòng: dịch trực tiếp vào file game (kiểu MTool)
+- `test_*.js` — test tự động
 
-### Changing the target language
-Open `MV_DebugTool.js` and find:
-```js
-const TARGET_LANG = 'vi';
-```
-Replace `'vi'` with your desired language code (e.g. `'en'`, `'zh'`, `'ja'`, `'ko'`).
+## ⚠️ Lưu ý
 
-### Clearing the translation cache
-Run this in the game's WebView console:
-```js
-localStorage.removeItem('mv_translation_cache');
-```
+- Font mặc định của game có thể thiếu dấu tiếng Việt → nếu chữ hiển thị ô vuông, thay font hỗ trợ Unicode cho game
+- API miễn phí là không chính thức, có thể bị giới hạn khi dùng quá nhiều
 
 ---
-
-## ⚠️ Important Notes
-
-1. **Legal** — For personal study and research only. Please support the original game developers.
-2. **Performance** — Synchronous `XMLHttpRequest` calls may cause minor lag on first load before the cache is populated.
-3. **Network** — An internet connection is required for first-time translations. Once cached, the plugin works offline.
-4. **Speed x2** — The speed boost can only be activated **once** per game session.
-5. **Backup** — Always back up your original game files before installing any plugin.
-
----
-
-## 👤 Author
-
-- **Author:** Bi9
-- **Version:** V3.0 (Android)
-- **Supported platform:** RPG Maker MV — Android
-
----
-
-## 📄 License
-
-This project is distributed under the **MIT License**. See the [LICENSE](LICENSE) file for details.
-
-## 🌟 Support
-
-If this tool has been helpful to you, please:
-- ⭐ Star this project
-- 🐛 Submit an Issue to report problems
-- 💬 Join the discussion group
-
----
-## Note
-- 99% of this code was generated by Gemini, so the code readability may not be the best.
-- It should work correctly in most cases. If you find too many issues, feel free to refactor it yourself.
-- My coding skills are limited, so I may not be able to produce something of the highest quality — my apologies 🙏🙏
+Made with ❤️ cho cộng đồng game RPG Maker Việt Nam
